@@ -1,4 +1,5 @@
 # IDS 568 Milestone 3 — MLOps Pipeline
+[![Train and Validate](https://github.com/HFM04/ids568-milestone3-hmasa3/actions/workflows/train_and_validate.yml/badge.svg)](https://github.com/HFM04/ids568-milestone3-hmasa3/actions/workflows/train_and_validate.yml)
 
 End-to-end workflow automation and model governance using:
 
