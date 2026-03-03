@@ -19,68 +19,51 @@ jobs:
       METRICS_FILE: metrics_output/latest_metrics.json
 
     steps:
-
-      # ─────────────────────────────────────────────
-      # 1. Checkout repository
-      # ─────────────────────────────────────────────
+      # 1. Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ─────────────────────────────────────────────
-      # 2. Set up Python
-      # ─────────────────────────────────────────────
+      # 2. Python setup
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      # ─────────────────────────────────────────────
       # 3. Install dependencies
-      # ─────────────────────────────────────────────
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ─────────────────────────────────────────────
-      # 4. Prepare directories
-      # ─────────────────────────────────────────────
+      # 4. Prepare directories (clean, deterministic runs)
       - name: Prepare workspace
         run: |
           rm -rf mlruns metrics_output data
           mkdir -p mlruns metrics_output data
 
-      # ─────────────────────────────────────────────
       # 5. Preprocess data
-      # ─────────────────────────────────────────────
       - name: Preprocess data
         run: python preprocess.py
 
-      # ─────────────────────────────────────────────
-      # 6. Train model
-      # ─────────────────────────────────────────────
+      # 6. Train model (writes metrics file for validation)
       - name: Train model
         run: |
           python train.py \
             --n-estimators 100 \
             --max-depth 5 \
-            --metrics-file $METRICS_FILE
+            --metrics-file "$METRICS_FILE"
 
-      # ─────────────────────────────────────────────
-      # 7. Validate model quality (Quality Gate)
-      # ─────────────────────────────────────────────
+      # 7. Quality gate
       - name: Validate model quality
         run: |
           python model_validation.py \
             --min-accuracy 0.85 \
             --min-f1 0.82 \
             --min-auc 0.90 \
-            --metrics-file $METRICS_FILE
+            --metrics-file "$METRICS_FILE"
 
-      # ─────────────────────────────────────────────
-      # 8. Upload artifacts (always, even on failure)
-      # ─────────────────────────────────────────────
+      # 8. Upload artifacts (even on failure)
       - name: Upload MLflow artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -90,11 +73,9 @@ jobs:
             mlruns/
             metrics_output/
 
-      # ─────────────────────────────────────────────
       # 9. Print metrics summary
-      # ─────────────────────────────────────────────
       - name: Print metrics summary
         if: always()
         run: |
           echo "=== Latest metrics ==="
-          cat metrics_output/latest_metrics.json || echo "No metrics file found"
+          cat "$METRICS_FILE" || echo "No metrics file found"
